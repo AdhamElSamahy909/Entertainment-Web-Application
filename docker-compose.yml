@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  server:
+    build: ./entertainment-web-app-backend
+    container_name: entertainment-web-app-server
+    ports:
+      - "4000:4000"
+    env_file:
+      - './entertainment-web-app-backend/config.env'
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+
+      - DATABASE=mongodb://mongo:27017/entertainment-web-app-database
+      - DATABASE_USERNAME=
+      - DATABASE_PASSWORD=
+
+      - PORT=4000
+
+    depends_on:
+      - redis
+      - mongo
+    volumes:
+      - ./entertainment-web-app-backend:/app
+      - /app/node_modules
+
+  client:
+    build: ./entertainment-web-app-frontend
+    container_name: entertainment-web-app-client
+    ports:
+      - "5173:5173"
+    env_file:
+      - "./entertainment-web-app-frontend/.env"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+
+    depends_on:
+      - server
+    volumes:
+      - ./entertainment-web-app-frontend:/app
+      - /app/node_modules
+
+  redis:
+    image: redis:alpine
+    container_name: entertainment-web-app-redis-cache
+    ports:
+      - "127.0.0.1:6379:6379"
+
+  mongo:
+    image: mongo:latest
+    container_name: entertainment-web-app-mongo-db
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

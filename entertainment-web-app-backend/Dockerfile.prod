@@ -1,0 +1,43 @@
+# Start a new build stage using the ultra-lightweight Node.js v24 (Alpine version). Let's nickname this stage 'builder' so we can steal files from it later.
+FROM node:24-alpine AS builder 
+
+# Create the /app folder and step inside it. All future commands happen here.
+WORKDIR /app
+
+# Copy only the shopping list, not the cooking ingredients.
+COPY package*.json ./
+# Install exactly what is on the list. No guessing.
+RUN npm ci
+
+# COPY /Users/You/project /app
+COPY . .
+
+# Don't just copy files. Actually run this command inside the container right now.
+RUN npm run build
+
+# Okay, the heavy lifting is done. Open a fresh, empty image so we can copy only the finished product into it.
+FROM node:24-alpine
+
+# Install the Tini tool without leaving any trash behind. We will use this tool later to 'wrap' our Node.js application so it shuts down safely and doesn't create zombie processes.
+RUN apk add --no-cache tini
+
+WORKDIR /app
+
+COPY package*.json ./
+# Install the engine (Express/Mongoose) so the car can drive, but throw away the assembly robots (TypeScript) because the car is already built.
+RUN npm ci --only=production
+
+# Reach back into the Factory (Builder stage), grab the finished dist folder, and place a copy of it right here in our clean Delivery Truck. Leave everything else behind.
+COPY --from=builder /app/dist ./dist
+
+# Give the keys to the office to the Employee.
+RUN chown -R node:node /app
+# Take off the Manager badge and put on the Employee badge.
+USER node
+
+# Every 30 seconds, quietly ping the homepage. If it responds, we are good. If it fails, report a 'System Failure' so the cloud platform knows to restart us.
+HEALTHCHECK --interval=30s --timeout=3s \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:4000/ || exit 1
+
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "dist/server.js"]
