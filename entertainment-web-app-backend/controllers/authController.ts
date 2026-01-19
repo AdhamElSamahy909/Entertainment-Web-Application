@@ -10,7 +10,6 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import asyncHandler from "express-async-handler";
 import User from "../models/userModel";
-// import redisClient from "../config/redisConfig";
 import {
   blockToken,
   getCache,
@@ -21,7 +20,7 @@ import {
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  "postmessage"
+  "postmessage",
 );
 
 function createSendAccessJWT(id: string, email: string, res: Response) {
@@ -33,7 +32,7 @@ function createSendAccessJWT(id: string, email: string, res: Response) {
     process.env.ACCESS_TOKEN_SECRET as string,
     {
       expiresIn: "15m",
-    }
+    },
   );
 
   res.cookie("accessToken", accessToken, {
@@ -53,7 +52,7 @@ function createSendRefreshJWT(id: string, email: string, res: Response) {
       email,
     },
     process.env.REFRESH_TOKEN_SECRET as string,
-    { expiresIn: "7d" }
+    { expiresIn: "7d" },
   );
 
   res.cookie("refreshToken", refreshToken, {
@@ -69,7 +68,7 @@ function createSendRefreshJWT(id: string, email: string, res: Response) {
 function sendAuthCredentials(
   req: IAuthRequest,
   res: Response,
-  accessToken: string
+  accessToken: string,
 ) {
   const { isMobile } = req.body;
 
@@ -85,11 +84,11 @@ function sendAuthCredentials(
 async function updateUserRefreshTokens(
   user: InstanceType<typeof User>,
   refreshToken: string,
-  deviceIdentifier: string
+  deviceIdentifier: string,
 ) {
   await User.updateOne(
     { _id: user.id },
-    { $pull: { refreshTokens: { device: deviceIdentifier } } }
+    { $pull: { refreshTokens: { device: deviceIdentifier } } },
   );
 
   await User.updateOne(
@@ -98,13 +97,13 @@ async function updateUserRefreshTokens(
       $push: {
         refreshTokens: { token: refreshToken, device: deviceIdentifier },
       },
-    }
+    },
   );
 }
 
 function attachUserToRequest(
   req: IAuthRequest,
-  user: InstanceType<typeof User>
+  user: InstanceType<typeof User>,
 ) {
   req.user = {};
   req.user.id = user.id;
@@ -113,17 +112,6 @@ function attachUserToRequest(
 }
 
 async function setUserToCache(user: InstanceType<typeof User>) {
-  // await redisClient.set(
-  //   `user:${user.id}`,
-  //   JSON.stringify({
-  // id: user.id,
-  // email: user.email,
-  // bookmarks: user.bookmarks,
-  //   }),
-  //   {
-  //     EX: 3600,
-  //   }
-  // );
   await setCache(
     `user:${user.id}`,
     JSON.stringify({
@@ -131,7 +119,7 @@ async function setUserToCache(user: InstanceType<typeof User>) {
       email: user.email,
       bookmarks: user.bookmarks,
     }),
-    3600
+    3600,
   );
 }
 
@@ -156,9 +144,6 @@ export const signup = asyncHandler(async (req: IAuthRequest, res: Response) => {
     try {
       const decoded = (jwt.decode(oldAccessToken) as DecodedToken) || null;
       if (decoded && decoded.exp) {
-        // await redisClient.set(oldAccessToken, "blacklisted", {
-        //   expiration: { type: "EXAT", value: decoded.exp },
-        // });
         await blockToken(oldAccessToken, decoded.exp);
       }
     } catch (err) {
@@ -180,25 +165,13 @@ export const signup = asyncHandler(async (req: IAuthRequest, res: Response) => {
   try {
     await updateUserRefreshTokens(newUser, refreshToken, deviceIdentifier);
 
-    // await redisClient.set(
-    //   `user:${newUser.id}`,
-    //   JSON.stringify({
-    //     id: newUser.id,
-    //     email: newUser.email,
-    //     bookmarks: newUser.bookmarks,
-    //   }),
-    //   {
-    //     EX: 3600,
-    //   }
-    // );
-
     await setUserToCache(newUser);
 
     sendAuthCredentials(req, res, accessToken);
   } catch (error) {
     console.log(
       "Error storing the refresh Token: ",
-      error instanceof Error ? error.message : error
+      error instanceof Error ? error.message : error,
     );
     res.status(500).json({ message: "Internal Server Error" });
   }
@@ -210,9 +183,6 @@ export const login = asyncHandler(async (req: IAuthRequest, res: Response) => {
     try {
       const decoded = (jwt.decode(oldAccessToken) as DecodedToken) || null;
       if (decoded?.exp) {
-        // await redisClient.set(oldAccessToken, "blacklisted", {
-        //   expiration: { type: "EXAT", value: decoded.exp },
-        // });
         await blockToken(oldAccessToken, decoded.exp);
       }
     } catch (err) {
@@ -251,7 +221,7 @@ export const login = asyncHandler(async (req: IAuthRequest, res: Response) => {
     const refreshToken = createSendRefreshJWT(
       foundUser.id,
       foundUser.email,
-      res
+      res,
     );
 
     try {
@@ -261,15 +231,15 @@ export const login = asyncHandler(async (req: IAuthRequest, res: Response) => {
 
       attachUserToRequest(req, foundUser);
 
-      // const cachedUsr = await redisClient.get(`user:${foundUser.id}`);
+      const cachedUser = await getCache(`user:${foundUser.id}`);
 
-      // if (!cachedUsr) await setUserToCache(foundUser);
+      if (!cachedUser) await setUserToCache(foundUser);
 
       sendAuthCredentials(req, res, accessToken);
     } catch (error) {
       console.log(
         "Error storing the refresh Token: ",
-        error instanceof Error ? error.message : error
+        error instanceof Error ? error.message : error,
       );
       res.status(500).json({ message: "Internal Server Error" });
     }
@@ -303,7 +273,7 @@ export const refresh = asyncHandler(
     try {
       const decoded = jwt.verify(
         refreshToken,
-        process.env.REFRESH_TOKEN_SECRET as string
+        process.env.REFRESH_TOKEN_SECRET as string,
       ) as JwtPayload;
 
       if (!foundUser || foundUser.id !== decoded.id) {
@@ -316,14 +286,14 @@ export const refresh = asyncHandler(
       const accessToken = createSendAccessJWT(
         foundUser.id,
         foundUser.email,
-        res
+        res,
       );
       sendAuthCredentials(req, res, accessToken);
     } catch (err) {
       res.status(403).json({ message: "Forbidden" });
       return;
     }
-  }
+  },
 );
 
 export const logout = asyncHandler(async (req: IAuthRequest, res: Response) => {
@@ -356,9 +326,6 @@ export const logout = asyncHandler(async (req: IAuthRequest, res: Response) => {
     console.log("Here is the decodedToken: ", decodedToken);
     const expirationDate = decodedToken.exp;
     try {
-      // await redisClient.set(accessToken, "blacklisted", {
-      //   EXAT: expirationDate,
-      // });
       await blockToken(accessToken, expirationDate);
     } catch (error) {
       console.log("Error blacklisting token in Redis: ", error);
@@ -387,7 +354,7 @@ export const logout = asyncHandler(async (req: IAuthRequest, res: Response) => {
   try {
     await User.updateOne(
       { "refreshTokens.token": refreshToken },
-      { $pull: { refreshTokens: { token: refreshToken } } }
+      { $pull: { refreshTokens: { token: refreshToken } } },
     );
     console.log("Removing current refresh token from DB");
   } catch (error) {
@@ -436,7 +403,6 @@ export const verifyJwt = asyncHandler(
 
     if (token) {
       try {
-        // const isBlackListed = await redisClient.exists(token);
         const isBlackListed = await isTokenBlocked(token);
         if (isBlackListed) {
           res
@@ -455,7 +421,7 @@ export const verifyJwt = asyncHandler(
     try {
       decoded = jwt.verify(
         token,
-        process.env.ACCESS_TOKEN_SECRET as string
+        process.env.ACCESS_TOKEN_SECRET as string,
       ) as DecodedToken;
     } catch (error) {
       console.log("Error verifying token: ", error);
@@ -464,7 +430,6 @@ export const verifyJwt = asyncHandler(
     }
 
     try {
-      // const cachedUser = await redisClient.get(`user:${decoded.id}`);
       const cachedUser = await getCache(`user:${decoded.id}`);
 
       if (cachedUser) {
@@ -474,7 +439,7 @@ export const verifyJwt = asyncHandler(
       }
 
       const userFromDb = await User.findById(decoded.id).select(
-        "bookmarks email id"
+        "bookmarks email id",
       );
 
       if (!userFromDb) {
@@ -491,7 +456,7 @@ export const verifyJwt = asyncHandler(
       res.status(500).json({ message: "Internal Server Error" });
       return;
     }
-  }
+  },
 );
 
 export const checkSessionStatus = (req: IAuthRequest, res: Response) => {
@@ -569,7 +534,6 @@ export const signInWithGoogle = asyncHandler(
 
       attachUserToRequest(req, user);
 
-      // const cachedUser = await redisClient.get(`user:${user.id}`);
       const cachedUser = await getCache(`user:${user.id}`);
 
       if (!cachedUser) await setUserToCache(user);
@@ -585,5 +549,5 @@ export const signInWithGoogle = asyncHandler(
         .json({ message: "Google Sign in Failed", error: errorMessage });
       return;
     }
-  }
+  },
 );
