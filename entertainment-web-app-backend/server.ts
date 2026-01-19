@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config({ path: "./config.env" });
 
-import app from "./app";
+import app from "./app.js";
 
 const DB = process.env.DATABASE_USERNAME
   ? (process.env.DATABASE as string)
