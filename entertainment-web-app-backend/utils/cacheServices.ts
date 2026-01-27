@@ -1,4 +1,4 @@
-import redisClient from "../config/redisConfig";
+import redisClient from "../config/redisConfig.js";
 
 export async function getCache(key: string): Promise<string | null> {
   if (!redisClient.isOpen) return null;

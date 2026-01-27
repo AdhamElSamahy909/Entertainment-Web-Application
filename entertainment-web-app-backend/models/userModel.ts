@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-import { Interface } from "readline";
 
 export interface IUser extends mongoose.Document {
   email: string;
@@ -74,7 +73,7 @@ const userSchema = new mongoose.Schema<IUser>(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.pre("save", async function (next) {
@@ -96,7 +95,7 @@ userSchema.pre(/^find/, function (this: mongoose.Query<any, any>, next) {
 
 userSchema.methods.correctPassword = async function (
   candidatePassword: string,
-  userPassword: string
+  userPassword: string,
 ) {
   return await bcrypt.compare(candidatePassword, userPassword);
 };

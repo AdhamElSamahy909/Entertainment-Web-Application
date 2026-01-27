@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
 // 1. Define strict types for your configuration
 interface ThumbnailConfig {
@@ -11,11 +13,14 @@ interface ThumbnailConfig {
   cols: number;
 }
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 // --- Configuration (MUST Match your React Constants) ---
 const CONFIG: ThumbnailConfig = {
   videosDir: path.join(
     __dirname,
-    "../../entertainment-web-app-frontend/public/assets/videos"
+    "../../entertainment-web-app-frontend/public/assets/videos",
   ),
   interval: 2, // 1 frame every 2 seconds
   width: 160, // Thumbnail width
@@ -27,7 +32,7 @@ const CONFIG: ThumbnailConfig = {
 // Explicitly type arguments and return Promise<void>
 const generateSprite = (
   videoPath: string,
-  outputDir: string
+  outputDir: string,
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     const outputPath = path.join(outputDir, "thumbnails.jpg");
@@ -35,10 +40,13 @@ const generateSprite = (
     console.log(`🎬 Processing: ${path.basename(videoPath)}`);
 
     ffmpeg(videoPath)
+      // .complexFilter([
+      //   `fps=1/${CONFIG.interval}`,
+      //   `scale=${CONFIG.width}:${CONFIG.height}`,
+      //   `tile=${CONFIG.cols}x1000`, // Allow up to 1000 rows
+      // ])
       .complexFilter([
-        `fps=1/${CONFIG.interval}`,
-        `scale=${CONFIG.width}:${CONFIG.height}`,
-        `tile=${CONFIG.cols}x1000`, // Allow up to 1000 rows
+        `fps=1/${CONFIG.interval},scale=${CONFIG.width}:${CONFIG.height},tile=${CONFIG.cols}x100`,
       ])
       .output(outputPath)
       .on("end", () => {

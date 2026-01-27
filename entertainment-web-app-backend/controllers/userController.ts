@@ -1,10 +1,10 @@
 import asyncHandler from "express-async-handler";
-import User from "../models/userModel";
+import User from "../models/userModel.js";
 import mongoose from "mongoose";
-import MovieTVSeries from "../models/movieTVSeriesModel";
-import redisClient from "../config/redisConfig";
+import MovieTVSeries from "../models/movieTVSeriesModel.js";
+import redisClient from "../config/redisConfig.js";
 import { Response } from "express";
-import { IAuthRequest } from "../utils/types";
+import { IAuthRequest } from "../utils/types.js";
 
 export const getBookmarks = asyncHandler(
   async (req: IAuthRequest, res: Response) => {
@@ -30,7 +30,7 @@ export const getBookmarks = asyncHandler(
       res.status(200).json(user.bookmarks);
       return;
     }
-  }
+  },
 );
 
 export const addBookmark = asyncHandler(
@@ -69,7 +69,7 @@ export const addBookmark = asyncHandler(
     }
 
     const alreadyBookmarked = user?.bookmarks?.some((bookmarkId) =>
-      bookmarkId.equals(showId)
+      bookmarkId.equals(showId),
     );
 
     if (alreadyBookmarked) {
@@ -88,7 +88,7 @@ export const addBookmark = asyncHandler(
       message: `Show ${show.title} is added to the bookmarks of user ${user.email}`,
       newShow: show,
     });
-  }
+  },
 );
 
 export const removeBookmark = asyncHandler(
@@ -139,7 +139,7 @@ export const removeBookmark = asyncHandler(
     }
 
     user.bookmarks = user.bookmarks.filter(
-      (bookmark) => bookmark.toString() !== showId
+      (bookmark) => bookmark.toString() !== showId,
     );
     await user.save();
 
@@ -148,5 +148,5 @@ export const removeBookmark = asyncHandler(
     res.status(200).json({
       message: `Show ${show?.title} is removed from the bookmarks of user ${user.email}`,
     });
-  }
+  },
 );

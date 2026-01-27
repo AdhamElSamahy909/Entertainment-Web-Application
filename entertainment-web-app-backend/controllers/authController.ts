@@ -4,18 +4,18 @@ import {
   IAuthRequest,
   JwtPayload,
   User as UserType,
-} from "../utils/types";
+} from "../utils/types.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import asyncHandler from "express-async-handler";
-import User from "../models/userModel";
+import User from "../models/userModel.js";
 import {
   blockToken,
   getCache,
   isTokenBlocked,
   setCache,
-} from "../utils/cacheServices";
+} from "../utils/cacheServices.js";
 
 const client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,

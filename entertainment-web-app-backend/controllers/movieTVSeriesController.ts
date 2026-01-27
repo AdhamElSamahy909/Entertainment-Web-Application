@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 
-import catchAsync from "../utils/catchAsync";
-import MovieTVSeries from "../models/movieTVSeriesModel";
+import catchAsync from "../utils/catchAsync.js";
+import MovieTVSeries from "../models/movieTVSeriesModel.js";
 import asyncHandler from "express-async-handler";
 
 export const getAllMoviesTVSeries = async (req: Request, res: Response) => {
@@ -27,7 +27,7 @@ export const getMovieTVSeries = asyncHandler(
 
     res.status(200).json(data);
     return;
-  }
+  },
 );
 
 export const search = catchAsync(async (req: Request, res: Response) => {
@@ -61,13 +61,13 @@ export const updateMovieTVSeries = catchAsync(
       {
         new: true,
         runValidators: true,
-      }
+      },
     );
 
     if (!data) return next(new Error("That show does not exist"));
 
     res.status(200).json({ status: "success", data });
-  }
+  },
 );
 
 export const createMovieTVSeries = async (req: Request, res: Response) => {

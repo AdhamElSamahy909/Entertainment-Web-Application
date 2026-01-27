@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  server-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+
+    container_name: entertainment-web-app-server-prod
+    restart: always
+
+    ports:
+      - "4000:4000"
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    env_file:
+      - config.env
+
+    environment:
+      - PORT=4000
+      - DATABASE=mongodb://host.docker.internal:27017/test-db
+      - REDIS_HOST=host.docker.internal
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=""

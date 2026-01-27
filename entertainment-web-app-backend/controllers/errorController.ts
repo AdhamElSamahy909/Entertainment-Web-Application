@@ -1,5 +1,5 @@
 import { ErrorRequestHandler, Response } from "express";
-import { AppError } from "../utils/types";
+import { AppError } from "../utils/types.js";
 
 const sendErrorDev = (err: AppError, res: Response) => {
   console.log(err);

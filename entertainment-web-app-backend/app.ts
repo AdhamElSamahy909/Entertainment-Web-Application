@@ -9,10 +9,10 @@ import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import authRouter from "./routes/authRoutes";
-import userRouter from "./routes/userRoutes";
-import movieTVSeriesRouter from "./routes/movieTVSeriesRoutes";
-import globalErrorHandler from "./controllers/errorController";
+import authRouter from "./routes/authRoutes.js";
+import userRouter from "./routes/userRoutes.js";
+import movieTVSeriesRouter from "./routes/movieTVSeriesRoutes.js";
+import globalErrorHandler from "./controllers/errorController.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -25,14 +25,14 @@ app.use(
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  })
+  }),
 );
 
 app.use(
   helmet({
     crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
     crossOriginResourcePolicy: { policy: "cross-origin" },
-  })
+  }),
 );
 
 const limiter = rateLimit({

@@ -1,7 +1,7 @@
 import express from "express";
 
-import * as MovieTVSeriesController from "../controllers/movieTVSeriesController";
-import * as authController from "../controllers/authController";
+import * as MovieTVSeriesController from "../controllers/movieTVSeriesController.js";
+import * as authController from "../controllers/authController.js";
 
 const router = express.Router();
 
