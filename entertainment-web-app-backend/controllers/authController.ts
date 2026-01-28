@@ -7,7 +7,6 @@ import {
 } from "../utils/types.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { OAuth2Client } from "google-auth-library";
 import asyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
 import {
@@ -16,12 +15,6 @@ import {
   isTokenBlocked,
   setCache,
 } from "../utils/cacheServices.js";
-
-const client = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  "postmessage",
-);
 
 function createSendAccessJWT(id: string, email: string, res: Response) {
   const accessToken = jwt.sign(
@@ -129,14 +122,7 @@ export const signup = asyncHandler(async (req: IAuthRequest, res: Response) => {
   const existingUser = await User.findOne({ email });
 
   if (existingUser) {
-    if (existingUser.googleId) {
-      res.status(409).json({
-        message:
-          "This email is registered with a Google account. Please sign in with Google",
-      });
-    } else {
-      res.status(409).json({ message: "Email is already in use" });
-    }
+    res.status(409).json({ message: "Email is already in use" });
   }
 
   const oldAccessToken = req.cookies?.accessToken;
@@ -197,14 +183,6 @@ export const login = asyncHandler(async (req: IAuthRequest, res: Response) => {
   }
 
   const foundUser = await User.findOne({ email });
-
-  if (foundUser != null && !foundUser.password) {
-    res.status(401).json({
-      message:
-        "You originally signed-in with Google. Please use the 'Sign in with Google' button",
-    });
-    return;
-  }
 
   console.log(foundUser);
 
@@ -463,91 +441,3 @@ export const checkSessionStatus = (req: IAuthRequest, res: Response) => {
   res.status(200).json({ valid: true, user: req.user });
   return;
 };
-
-// Sign-in With Google
-export const signInWithGoogle = asyncHandler(
-  async (req: IAuthRequest, res: Response) => {
-    const { code, nonce } = req.body;
-    if (!code || !nonce) {
-      res.status(400).json({ message: "Authorization code is missing" });
-      return;
-    }
-
-    console.log("Entered try-catch for google sign in");
-
-    try {
-      const { tokens } = await client.getToken(code);
-
-      const idToken = tokens.id_token;
-      if (!idToken) {
-        console.log("No idToken found");
-        return;
-      }
-
-      const ticket = await client.verifyIdToken({
-        idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
-      });
-
-      const payload = ticket.getPayload();
-
-      if (!payload) {
-        res.status(400).json({ message: "Invalid Google Token Payload" });
-        return;
-      }
-
-      if (nonce && payload.nonce && payload.nonce !== nonce) {
-        res
-          .status(400)
-          .json({ message: "Invalid nonce. Replay attack suspected" });
-        return;
-      }
-
-      const { email, sub: googleId, picture } = payload;
-
-      if (!email) {
-        res.status(400).json({ message: "Email not found in Google token" });
-        return;
-      }
-
-      let user = await User.findOne({ googleId });
-
-      if (!user) {
-        user = await User.findOne({ email });
-
-        if (user) {
-          user.googleId = googleId;
-          user.photo = user.photo || picture;
-          user.email = user.email || email;
-          await user.save();
-        } else {
-          user = await User.create({ email, googleId, photo: picture });
-        }
-      }
-
-      const deviceIdentifier = req.headers["user-agent"] || "unknown";
-
-      const accessToken = createSendAccessJWT(user.id, user.email, res);
-      const refreshToken = createSendRefreshJWT(user.id, user.email, res);
-
-      await updateUserRefreshTokens(user, refreshToken, deviceIdentifier);
-
-      attachUserToRequest(req, user);
-
-      const cachedUser = await getCache(`user:${user.id}`);
-
-      if (!cachedUser) await setUserToCache(user);
-
-      sendAuthCredentials(req, res, accessToken);
-      return;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unkown error occurred";
-      console.log("Google Auth Error: ", error);
-      res
-        .status(500)
-        .json({ message: "Google Sign in Failed", error: errorMessage });
-      return;
-    }
-  },
-);

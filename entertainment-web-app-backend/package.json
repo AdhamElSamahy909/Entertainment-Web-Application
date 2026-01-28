@@ -5,9 +5,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "nodemon dist/app.js",
-    "build": "npx tsc",
-    "dev": "nodemon server.ts"
+    "start": "nodemon dist/server.js",
+    "build": "rm -rf dist && npx tsc && cp data/data.json dist/data/data.json",
+    "dev": "nodemon server.ts",
+    "seed": "node dist/data/import-dev-data.js"
   },
   "author": "Adham El Samahy",
   "license": "ISC",

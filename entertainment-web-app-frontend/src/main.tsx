@@ -17,11 +17,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <App />
       </Provider>
     </GoogleOAuthProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
-
-// "test": "echo \"Error: no test specified\" && exit 1",
-// "start": "nodemon server.js"
-{
-  /* <GoogleOAuthProvider clientId="601922377518-84be0dfp94dkggb39boci4a5a3k2d69q.apps.googleusercontent.com"> */
-}

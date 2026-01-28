@@ -1,9 +1,4 @@
-import {
-  AuthResponse,
-  GoogleSignInRequest,
-  SignupRequest,
-  LoginRequest,
-} from "../../types/auth";
+import { AuthResponse, SignupRequest, LoginRequest } from "../../types/auth";
 import { MovieTVSeries } from "../../types/models";
 import { apiSlice } from "./apiSlice";
 import { logout, setCredentials } from "./authSlice";
@@ -25,29 +20,6 @@ export const authApiSlice = apiSlice.injectEndpoints({
           dispatch(setCredentials(data));
         } catch (error) {
           console.log("Error from signing up:, ", error);
-        }
-      },
-
-      invalidatesTags: [
-        "Auth",
-        { type: "MoviesTVSeries", id: "BOOKMARK_LIST" },
-      ],
-    }),
-
-    signInWithGoogle: Builder.mutation<AuthResponse, GoogleSignInRequest>({
-      query: ({ code, nonce }) => ({
-        url: "/auth/google/callback",
-        method: "POST",
-        body: { code, nonce },
-      }),
-
-      async onQueryStarted(_, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-          console.log("Data from google sign in: ", data);
-          dispatch(setCredentials(data));
-        } catch (error) {
-          console.log("Error from signing in with google: ", error);
         }
       },
 
@@ -99,8 +71,8 @@ export const authApiSlice = apiSlice.injectEndpoints({
               undefined,
               (draft: MovieTVSeries[]) => {
                 draft.splice(0, draft.length);
-              }
-            )
+              },
+            ),
           );
         } catch (error) {
           console.log("Error from logging out: ", error);
@@ -132,5 +104,4 @@ export const {
   useLoginMutation,
   useLogoutMutation,
   useRefreshQuery,
-  useSignInWithGoogleMutation,
 } = authApiSlice;

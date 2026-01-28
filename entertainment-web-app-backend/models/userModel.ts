@@ -5,7 +5,6 @@ export interface IUser extends mongoose.Document {
   email: string;
   password: string;
   passwordConfirm?: string;
-  googleId?: string;
   photo?: string;
   active?: boolean;
   refreshTokens?: { token: { type: string }; device: { type: string } }[];
@@ -21,20 +20,15 @@ const userSchema = new mongoose.Schema<IUser>(
     },
     password: {
       type: String,
-      required: [
-        function () {
-          return !this.googleId;
-        },
-        "please provide a password",
-      ],
+      required: [true, "please provide a password"],
       minlength: 5,
-      // select: false,
+      select: false,
     },
     passwordConfirm: {
       type: String,
       required: [
         function () {
-          return !this.googleId && (this.isNew || this.isModified("password"));
+          return this.isNew || this.isModified("password");
         },
         "please confirm your password",
       ],
@@ -45,12 +39,6 @@ const userSchema = new mongoose.Schema<IUser>(
         message: "passwords are not the same",
       },
     },
-    googleId: {
-      type: String,
-      required: false,
-      unique: true,
-      sparse: true,
-    },
     photo: {
       type: String,
       default: "image-avatar.png",
@@ -58,7 +46,7 @@ const userSchema = new mongoose.Schema<IUser>(
     active: {
       type: Boolean,
       default: true,
-      // select: false,
+      select: false,
     },
     refreshTokens: [
       {

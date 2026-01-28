@@ -20,8 +20,3 @@ export interface SignupRequest {
   password: string;
   passwordConfirm: string;
 }
-
-export interface GoogleSignInRequest {
-  code: string;
-  nonce: string;
-}

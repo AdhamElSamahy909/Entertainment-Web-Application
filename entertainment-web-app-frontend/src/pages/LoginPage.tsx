@@ -2,7 +2,6 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../services/api/authApiSlice";
 import toast from "react-hot-toast";
-import GoogleSignin from "../ui/GoogleSignin";
 
 interface LoginInputs {
   email: string;
@@ -74,10 +73,6 @@ function LoginPage() {
             >
               Login to your account
             </button>
-
-            <div className="w-full [&>*]:w-full">
-              <GoogleSignin />
-            </div>
           </div>
 
           <div className="w-full flex gap-[1rem] mt-[1.5rem] text-center justify-center text-secondary dark:text-white">
